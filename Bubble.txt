@@ -1,0 +1,114 @@
+section .data
+	fname db "a1.txt",00H
+
+	msg db "Sorted Array is : ",10
+	msglen equ $-msg
+
+	new db 10
+
+	%macro operate 4
+	mov rax, %1
+	mov rdi, %2
+	mov rsi, %3
+	mov rdx, %4
+	syscall
+	%endmacro
+	
+section .bss
+	array resb 15
+	fhandle resq 1
+	buffer resb 512
+	bufferlen resq 1 
+	result resb 15
+
+section .text
+global _start:
+_start:
+	
+	operate 2,fname,0,0777q             		;For opening the File      
+	mov qword[fhandle],rax				;Insert the File name into fhandle
+	operate 0,[fhandle],buffer,512       		;Reading the file
+	mov qword[bufferlen],rax 
+	mov rcx,qword[bufferlen]                        ;Counter rcx is set to bufferlen
+	
+	mov esi,buffer
+	mov edi,array
+	
+	mov bx,0
+label:	mov ax,0
+   up:	mov bl,byte[esi]
+	cmp bl,0AH     					;we are comparing with 0AH to goto another number
+	je label2
+	cmp bl,39H
+	jbe label1
+	sub bl,07H					;Packing Logic
+label1: sub bl,30H
+	shl ax,4
+	add al,bl
+	inc esi
+	dec rcx
+	jmp up
+	
+label2: mov byte[edi],al				;Numbers are being stored in array
+	inc edi
+	inc esi
+	dec rcx
+	jnz label
+
+	mov bl,5					;We are taking 5 no. hence the outer loop will run 5 times
+up2:	mov cl,4					;each time the inner loop is being runned 4 times i.e. n-1 times
+	mov esi,array
+up1:	mov al,byte[esi]
+	cmp al,byte[esi+1]
+	jbe label3					;If no swapping takes place
+	xchg al,byte[esi+1]                             ;Swaping the numbers
+	mov byte[esi],al
+label3:	inc esi
+	dec cl						;decrement inner loop
+	jnz up1
+	
+	dec bl 						;decrement outer loop
+	jnz up2						;jmp till total numbers are compared
+	
+	
+	mov edi,array
+	mov esi,result
+	mov dl,10					;there are 5 2-digit numbers hence the loop will run 10 times
+up4:	mov cl,02					;one number contains 2 digits
+	mov al,byte[edi]
+up3:	rol al,4
+	mov bl,al
+	AND al,0FH
+	cmp al,09H
+	jbe label4
+	add al,07H
+label4: add al,30H					;Unpacking to Display
+	mov byte[esi],al
+	mov al,bl
+	inc esi
+	dec cl 						
+	jnz up3
+	
+	mov byte[esi],0AH				;After unpacking we need to add a enter key 
+	inc esi
+	inc edi
+	dec dl
+	jnz up4
+	
+	operate 1,1,msg,msglen
+	operate 1,1,result,15				;Display Output
+	
+Exit:
+operate 60,0,0,0
+
+;Output:-
+;student@B4L0106:~$ nasm -f elf64 a.asm
+;student@B4L0106:~$ ld -o a a.o
+;student@B4L0106:~$ ./a a1.txt
+;Sorted Array is : 
+;11
+;15
+;20
+;25
+;30
+

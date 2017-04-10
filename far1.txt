@@ -1,0 +1,113 @@
+global count1							;count1 is extern in prog1 and hence global in prog2
+extern fname,buffer,fhandle,buff_len				;these variables are global in prog1 and hence extern in prog2
+
+section .data
+
+	msg1 db "Implementation of FAR procedure is successful!",10
+	msg1len equ $-msg1	
+
+	msg2 db "Number of blank spaces is:"
+	msg2len equ $-msg2
+
+	msg3 db "Number of lines is:"
+	msg3len equ $-msg3
+	
+	msg4 db "Number of times 'A' appears is:"
+	msg4len equ $-msg4
+	
+	new db 10
+
+	%macro disp 4							;Defining macro						
+	mov rax,%1							
+	mov rdi,%2			
+	mov rsi,%3
+	mov rdx,%4
+	syscall
+	%endmacro
+
+
+section .bss
+
+	blank resb 1
+	linecount resb 1
+	lettercount resb 1
+
+section .text
+	count1:
+		;SPACES
+	
+		disp 1,1,msg1,msg1len
+		
+		mov ebx,[buff_len]
+		mov esi,buffer					;pointing to the contents of the file
+	  up1:	mov al,[esi]
+		cmp al,20h					;checking for number of spaces
+		jnz down1
+		inc byte[blank]					;incrementing the counter for spaces
+	 down1:	inc esi						;incrementing the esi to point to next location
+		dec ebx					
+		jnz up1						;checking if buffer contets are finished
+		
+		mov al,byte[blank]
+		cmp al,0Ah					;conversion to ASCII
+		jb down2
+		add al,07h
+	 down2: add al,30h
+
+		mov byte[blank],al
+		disp 1,1,msg2,msg2len
+		disp 1,1,blank,1
+		disp 1,1,new,1
+
+
+
+		;NUMBER OF LINES
+
+		mov ebx,[buff_len]
+		mov esi,buffer					;pointing to the contents of the file
+	  up2:	mov al,[esi]
+		cmp al,2Eh					;checking for number of lines
+		jnz down3
+		inc byte[linecount]				;incrementing the counter for number of lines
+	 down3:	inc esi						;incrementing the esi to point to next location
+		dec ebx
+		jnz up2						;checking if buffer contets are finished
+		
+		mov al,byte[linecount]
+		cmp al,0Ah					;conversion to ASCII
+		jb down4
+		add al,07h
+	 down4: add al,30h
+
+		mov byte[linecount],al
+		disp 1,1,msg3,msg3len
+		disp 1,1,linecount,1
+		disp 1,1,new,1
+
+
+
+
+		;NUMBER OF 'A's IN THE PROGRAM
+
+		mov ebx,[buff_len]
+		mov esi,buffer					;pointing to the contents of the file
+	  up3:	mov al,[esi]
+		cmp al,61h					;checking for number of times 'A' occurs
+		jnz down5
+		inc byte[lettercount]				;incrementing the counter for number of 'A's
+	 down5:	inc esi						;incrementing the esi to point to next location
+		dec ebx
+		jnz up3						;checking if buffer contets are finished
+		
+		mov al,byte[lettercount]
+		cmp al,0Ah					;conversion to ASCII
+		jb down6
+		add al,07h
+	 down6: add al,30h
+
+		mov byte[lettercount],al
+		disp 1,1,msg4,msg4len
+		disp 1,1,lettercount,1
+		disp 1,1,new,1
+		
+		ret

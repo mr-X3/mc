@@ -1,0 +1,95 @@
+section .data
+
+	msg db "Factorial of the number is: "
+	msglen equ $-msg
+
+	new db 10
+
+	%macro operate 4					;macro call
+	mov rax , %1
+	mov rdi , %2
+	mov rsi , %3
+	mov rdx , %4
+	syscall
+	%endmacro
+
+section .bss
+	
+	result resb 4
+	temp resb 1
+
+section .text
+
+global _start  
+
+_start:
+	pop r8						
+	pop r8	
+	pop r8
+
+	mov ax, 1
+	mov bl,[r8]						;transfering the number to bl register
+	sub bl,30H
+	call fact
+
+	mov word[result],ax					;initialising the result to 1
+	operate 1,1,msg,msglen					;displaying the message 
+	call display
+	
+
+  exit:	operate 60, 0, 0, 0
+
+  fact:	cmp bl,1						;if the number is 1 or 0 we return 1
+	jae down
+	ret
+  down:	mul bl							;multiplying the number with contents of ax register
+	dec bl							;decrementing the number to calculate factorial
+	call fact	
+	ret		
+
+
+display:mov ax,word[result]					;logic for 16 bit display
+	mov ebp,4
+   up:	rol ax,4				
+	mov word[result],ax
+	and al,0FH
+	cmp al,09H	
+	jbe down1
+	add al,07H
+ down1:	add al,30H
+	mov byte[temp],al
+	operate 1,1,temp,1
+	mov ax,word[result]
+	dec ebp
+	jnz up
+	operate 1,1,new,1
+	ret	
+
+	;OUTPUT
+	
+	hp@hp-HP-Pavilion-Notebook:~$ gedit 9.asm
+	hp@hp-HP-Pavilion-Notebook:~$ nasm -f elf64 9.asm
+	hp@hp-HP-Pavilion-Notebook:~$ ld -o9 9.o
+	
+	hp@hp-HP-Pavilion-Notebook:~$ ./9 0
+	Factorial of the number is: 0001
+
+	hp@hp-HP-Pavilion-Notebook:~$ ./9 1
+	Factorial of the number is: 0001
+
+	hp@hp-HP-Pavilion-Notebook:~$ ./9 2
+	Factorial of the number is: 0002
+
+	hp@hp-HP-Pavilion-Notebook:~$ ./9 3
+	Factorial of the number is: 0006
+
+	hp@hp-HP-Pavilion-Notebook:~$ ./9 4
+	Factorial of the number is: 0018
+	
+	hp@hp-HP-Pavilion-Notebook:~$ ./9 5
+	Factorial of the number is: 0078
+
+
+	
+
+	

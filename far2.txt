@@ -1,0 +1,84 @@
+extern count1
+global fname,buffer,fhandle,buff_len
+
+section .data
+
+	msg db "Implementation of operations using FAR procedures",10
+	msglen equ $-msg	
+
+	msg1 db "File contents are:",10
+	msg1len equ $-msg1
+
+	fname db "a.txt",00h
+	fnamelen equ $-fname
+	
+	new db 10
+
+	%macro disp 4															
+	mov rax,%1								;Defining a macro
+	mov rdi,%2			
+	mov rsi,%3
+	mov rdx,%4
+	syscall
+	%endmacro
+
+
+section .bss
+
+	buffer resb 512
+	fhandle resq 1
+	buff_len resq 1
+
+section .text
+
+_start:
+	disp 1,1,msg,msglen	
+	
+	;OPEN
+
+  down:	disp 2,fname,0q,0777q
+	mov[fhandle],rax
+
+
+	;READ
+
+ loop:	disp 0,[fhandle],buffer,512
+	mov [buff_len],rax
+
+
+	call count1					;calling the far procedure 'Count1'
+
+	;WRITE
+
+	disp 1,1,msg1,msg1len
+	disp 1,1,new,1
+	disp 1,1,buffer,[buff_len]
+	mov rax,[buff_len]
+	cmp rax,512					;if the number of bytes exceeds 512 then the read and write process repeats
+	jz loop
+
+	;CLOSE
+	disp 3,[fhandle],0,0
+	jmp exit 
+
+
+ exit:	disp 60,0,0,0
+
+
+
+;OUTPUT
+
+Implementation of operations using FAR procedures
+
+Implementation of FAR procedure is successful!			;This statement indicates that the call to far procedure is successful
+
+Number of blank spaces is:C
+Number of lines is:3
+Number of times 'A' appears is:3
+
+File contents are:
+
+Hi this is program for is running successfully.What are you doing.Are you fine.
+
+
+
